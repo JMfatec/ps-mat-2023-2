@@ -16,26 +16,24 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 import ptLocale from 'date-fns/locale/pt-BR'
 import { parseISO } from 'date-fns'
 
-export default function CustomersForm() {
+export default function CarForm() {
 
   const navigate = useNavigate()
   const params = useParams()
 
-  const customerDefaults = {
-    name: '',
-    ident_document: '',
-    birth_date: '',
-    street_name: '',
-    house_number: '',
-    neighborhood: '',
-    municipality: '',
-    state: '',
-    phone: '',
-    email: ''
+  const carDefaults = {
+    brand: '',
+    model: '',
+    color: '',
+    year_manufacture: '',
+    imported: '',
+    plates: '',
+    selling_date: '',
+    selling_price: '',
   }
 
   const [state, setState] = React.useState({
-    customer: customerDefaults,    
+    car: carDefaults,    
     showWaiting: false,
     notification: {
       show: false,
@@ -47,13 +45,13 @@ export default function CustomersForm() {
   })
 
   const {
-    customer,
+    car,
     showWaiting,
     notification,
     openDialog,
     isFormModified
   } = state
-
+/*
   const states = [
     { label: 'Distrito Federal', value: 'DF' },
     { label: 'Espírito Santo', value: 'ES' },
@@ -63,7 +61,7 @@ export default function CustomersForm() {
     { label: 'Rio de Janeiro', value: 'RJ' },
     { label: 'São Paulo', value: 'SP' }
   ]
-
+*/
   const maskFormatChars = {
       '9': '[0-9]',
       'a': '[A-Za-z]',
@@ -85,12 +83,12 @@ export default function CustomersForm() {
     // em segundo plano
     setState({ ...state, showWaiting: true })
     try {
-      const result = await myfetch.get(`customer/${params.id}`)
+      const result = await myfetch.get(`car/${params.id}`)
 
       //É necessário converter a data 
       result.birth_date = parseISO(result.birth_date)
 
-      setState({ ...state, showWaiting: false, customer: result })
+      setState({ ...state, showWaiting: false, car: result })
     } 
     catch(error) {
       setState({ ...state, 
@@ -106,12 +104,12 @@ export default function CustomersForm() {
 
   function handleFieldChange(event) {
     console.log(event)
-    const newCustomer = { ...customer }
-    newCustomer[event.target.name] = event.target.value
+    const newCar = { ...car }
+    newCar[event.target.name] = event.target.value
     
     setState({ 
       ...state, 
-      customer: newCustomer,
+      car: newCar,
       isFormModified: true      // O formulário foi alterado
     })
   }
@@ -123,9 +121,9 @@ export default function CustomersForm() {
       let result
       //Se existir o campo id nos dados do cliente, chama o método PUT
       // para alteração
-      if(customer.id) result = await myfetch.put(`customer/${customer.id}`, customer)
+      if(car.id) result = await myfetch.put(`car/${car.id}`, car)
 
-      else result = await myfetch.post('customer', customer)
+      else result = await myfetch.post('car', car)
 
       setState({ ...state, 
         showWaiting: false, // Esconde o backdrop
@@ -194,7 +192,7 @@ export default function CustomersForm() {
       </ConfirmDialog>
 
       <Typography variant="h1" sx={{ mb: '50px' }}>
-        Cadastro de clientes
+        Cadastro de Carros
       </Typography>
 
       <form onSubmit={handleFormSubmit}>
@@ -202,20 +200,20 @@ export default function CustomersForm() {
         <Box className="form-fields">
         
           <TextField 
-            id="name"
-            name="name" 
-            label="Nome completo" 
+            id="brand"
+            brand="brand" 
+            label="Marca" 
             variant="filled"
             required
             fullWidth
-            value={customer.name}
+            value={car.brand}
             onChange={handleFieldChange}
             autoFocus
           />
 <InputMask
-            mask="999.999.999-99"
+            mask="AAA-9A99"
             maskChar=" "
-            value={customer.ident_document}
+            value={car.plates}
             onChange={handleFieldChange} 
          >
           {
@@ -232,7 +230,7 @@ export default function CustomersForm() {
 
 <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptLocale}>
   <DatePicker
-    label="Data de nascimento"
+    label="Data de venda"
     value={customer.birth_date}
     onChange={ value => 
       handleFieldChange({ target: { name: 'birth_date', value } }) 
