@@ -15,18 +15,27 @@ import {DatePicker, LocalizationProvider } from '@mui/x-date-pickers'
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 import ptLocale from 'date-fns/locale/pt-BR'
 import { parseISO } from 'date-fns'
+//import * as React from 'react';
+import Switch from '@mui/material/Switch';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import { FormControl } from '@mui/material'
+import { DemoContainer, DemoItem } from '@mui/x-date-pickers/internals/demo';
+
 
 export default function CarForm() {
 
   const navigate = useNavigate()
   const params = useParams()
+  const buton = { inputProps: { 'aria-label': 'Switch demo' } };
+
+  //const [imported, setImported] = React.useState(car.imported);
 
   const carDefaults = {
     brand: '',
     model: '',
     color: '',
     year_manufacture: '',
-    imported: '',
+    imported: false,
     plates: '',
     selling_date: '',
     selling_price: '',
@@ -51,17 +60,7 @@ export default function CarForm() {
     openDialog,
     isFormModified
   } = state
-/*
-  const states = [
-    { label: 'Distrito Federal', value: 'DF' },
-    { label: 'Espírito Santo', value: 'ES' },
-    { label: 'Goiás', value: 'GO' },
-    { label: 'Minas Gerais', value: 'MG' },
-    { label: 'Paraná', value: 'PR' },
-    { label: 'Rio de Janeiro', value: 'RJ' },
-    { label: 'São Paulo', value: 'SP' }
-  ]
-*/
+
   const maskFormatChars = {
       '9': '[0-9]',
       'a': '[A-Za-z]',
@@ -201,7 +200,7 @@ export default function CarForm() {
         
           <TextField 
             id="brand"
-            brand="brand" 
+            name="brand" 
             label="Marca" 
             variant="filled"
             required
@@ -211,16 +210,16 @@ export default function CarForm() {
             autoFocus
           />
 <InputMask
-            mask="AAA-9A99"
+            mask="aaa-9a99"
             maskChar=" "
             value={car.plates}
             onChange={handleFieldChange} 
          >
           {
          () => <TextField 
-            id="ident_document"
-            name="ident_document" 
-            label="CPF" 
+            id="plates"
+            name="plates" 
+            label="Placas" 
             variant="filled"
             required
             fullWidth
@@ -231,124 +230,79 @@ export default function CarForm() {
 <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptLocale}>
   <DatePicker
     label="Data de venda"
-    value={customer.birth_date}
+    value={car.selling_date}
     onChange={ value => 
-      handleFieldChange({ target: { name: 'birth_date', value } }) 
+      handleFieldChange({ target: { name: 'selling_date', value } }) 
     }
     slotProps={{ textField: { variant: 'filled', fullWidth: true } }}
   />
 </LocalizationProvider>
 
+
+
           <TextField 
-            id="street_name"
-            name="street_name" 
-            label="Logradouro (Rua, Av., etc.)" 
+            id="model"
+            name="model" 
+            label= "Modelo"
             variant="filled"
             required
             fullWidth
-            placeholder="Ex.: Rua Principal"
-            value={customer.street_name}
+            placeholder="Ex: Palio, Gol, Ferrari, etc.."
+            value={car.model}
             onChange={handleFieldChange}
           />
 
           <TextField 
-            id="house_number"
-            name="house_number" 
-            label="Nº" 
+            id="selling_price"
+            name="selling_price" 
+            label="Valor" 
             variant="filled"
             required
             fullWidth
-            value={customer.house_number}
+            value={car.selling_price}
             onChange={handleFieldChange}
           />
 
           <TextField 
-            id="complements"
-            name="complements" 
-            label="Complemento" 
-            variant="filled"
-            fullWidth
-            placeholder="Apto., bloco, casa, etc."
-            value={customer.complements}
-            onChange={handleFieldChange}
-          />
-
-          <TextField 
-            id="neighborhood"
-            name="neighborhood" 
-            label="Bairro" 
+            id="color"
+            name="color" 
+            label="Cor" 
             variant="filled"
             required
             fullWidth
-            value={customer.neighborhood}
+            value={car.color}
             onChange={handleFieldChange}
           />
+
           
-          <TextField 
-            id="municipality"
-            name="municipality" 
-            label="Município" 
-            variant="filled"
-            required
-            fullWidth
-            value={customer.municipality}
-            onChange={handleFieldChange}
-          />
 
-          <TextField
-            id="state"
-            name="state"
-            select
-            label="UF"
-            variant="filled"
-            fullWidth
-            required
-            value={customer.state}
-            onChange={handleFieldChange}
-          >
-            {states.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </TextField>
+<LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptLocale}>
 
-          <InputMask
-            mask="(99) _9999-9999"
-            FormatChars={maskFormatChars}
-            maskChar="_"
-            value={customer.phone}
-            onChange={handleFieldChange} 
-         >
-          {
-         () => <TextField 
-         id="phone"
-         name="phone" 
-         label="Celular / Telefone de contato" 
-         variant="filled"
-         required
-         fullWidth
-         value={customer.phone}
-         onChange={handleFieldChange}
-       />  
-        }
-</InputMask>
-          
-          <TextField 
-            id="email"
-            name="email" 
-            label="E-mail" 
-            variant="filled"
-            required
-            fullWidth
-            value={customer.email}
-            onChange={handleFieldChange}
-          />
-          
+    <DatePicker
+      label="Ano de Fabricação"
+      value={car.year_manufacture}
+      maxDate={'1940-01-01T00:00:00.000'}
+      views={['year', 'month', 'day']}
+      onChange={ value => 
+      handleFieldChange({ target: { name: 'year_manufacture', value } }) 
+    }
+      slotProps={{ textField: { variant: 'filled', fullWidth: true } }}
+    />
+
+</LocalizationProvider>
+<FormControl>
+  <FormControlLabel control={<Switch defaultUnchecked />} 
+    label="Importado"
+    id="imported"
+    name="imported"
+    required
+    value={car.imported}
+   />
+  </FormControl>
         </Box>
 
         <Box sx={{ fontFamily: 'monospace' }}>
-          { JSON.stringify(customer) }
+          { JSON.stringify(car) }
         </Box>
 
         <Toolbar sx={{ justifyContent: "space-around" }}>
