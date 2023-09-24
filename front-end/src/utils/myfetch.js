@@ -33,6 +33,7 @@ function getErrorDescription(response) {
 }
 
 myfetch.post = async function(path, body) {
+  console.log(baseUrl + path + defaultOptions)
   const response = await fetch(baseUrl + path, defaultOptions(body, 'POST'))
   if(response.ok) return true
   else throw new Error(getErrorDescription(response))

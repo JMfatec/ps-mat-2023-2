@@ -98,18 +98,18 @@ export default function CarsList() {
       headerName: 'Modelo',
       align: 'center',
       headerAlign: 'center',
-      width: 400
+      width: 150
     },
     
     {
       field: 'color',
       headerName: 'Cor',
-      width: 200,
+      width: 100,
   
     },
     {
       field: 'year_manufacture',
-      headerName: 'Ano',
+      headerName: 'Ano de fabricação',
       align: 'center',
       headerAlign: 'center',
       width: 150
@@ -117,12 +117,12 @@ export default function CarsList() {
     {
       field: 'imported',
       headerName: 'Importado',
-      width: 200
+      width: 150
     },
     {
         field: 'plates',
         headerName: 'Placas',
-        width: 200
+        width: 150
       },
     {
         field: 'selling_date',
@@ -140,7 +140,7 @@ export default function CarsList() {
         headerName: 'Preço',
         align: 'center',
         headerAlign: 'center',
-        width: 100,
+        width: 200,
         
 
       },

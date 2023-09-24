@@ -10,8 +10,8 @@ import Waiting from '../components/ui/Waiting'
 import Notification from '../components/ui/Notification'
 import { useNavigate, useParams } from 'react-router-dom'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
-import InputMask  from 'react-input-mask'
-import {DatePicker, LocalizationProvider } from '@mui/x-date-pickers'
+import InputMask from 'react-input-mask'
+import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers'
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 import ptLocale from 'date-fns/locale/pt-BR'
 import { parseISO } from 'date-fns'
@@ -21,6 +21,7 @@ export default function CustomersForm() {
   const navigate = useNavigate()
   const params = useParams()
 
+  // Valores padrão para os campos do formulário
   const customerDefaults = {
     name: '',
     ident_document: '',
@@ -65,10 +66,10 @@ export default function CustomersForm() {
   ]
 
   const maskFormatChars = {
-      '9': '[0-9]',
-      'a': '[A-Za-z]',
-      '*': '[A-Za-z0-9]',
-      '_': '[\s0-9]'           //Um espaço em branca ou um digito
+    '9': '[0-9]',
+    'a': '[A-Za-z]',
+    '*': '[A-Za-z0-9]',
+    '_': '[\s0-9]'     // Um espaço em branco ou um dígito
   }
 
   // useEffect com vetor de dependências vazio. Será executado
@@ -86,11 +87,13 @@ export default function CustomersForm() {
     setState({ ...state, showWaiting: true })
     try {
       const result = await myfetch.get(`customer/${params.id}`)
-
-      //É necessário converter a data 
+      
+      // É necesário converter a data de nascimento de string para data
+      // antes de carregá-la no componente DatePicker
       result.birth_date = parseISO(result.birth_date)
 
       setState({ ...state, showWaiting: false, customer: result })
+      
     } 
     catch(error) {
       setState({ ...state, 
@@ -120,13 +123,16 @@ export default function CustomersForm() {
     setState({ ...state, showWaiting: true }) // Exibe o backdrop
     event.preventDefault(false)   // Evita o recarregamento da página
     try {
+
       let result
-      //Se existir o campo id nos dados do cliente, chama o método PUT
+
+      // Se existir o campo id no json de dados, chama o método PUT
       // para alteração
       if(customer.id) result = await myfetch.put(`customer/${customer.id}`, customer)
 
+      // Senão, chama o método POST para criar um novo registro
       else result = await myfetch.post('customer', customer)
-
+      
       setState({ ...state, 
         showWaiting: false, // Esconde o backdrop
         notification: {
@@ -193,6 +199,15 @@ export default function CustomersForm() {
         Há alterações que ainda não foram salvas. Deseja realmente voltar?
       </ConfirmDialog>
 
+      <Waiting show={showWaiting} />
+
+      <Notification
+        show={notification.show}
+        severity={notification.severity}
+        message={notification.message}
+        onClose={handleNotificationClose}
+      /> 
+
       <Typography variant="h1" sx={{ mb: '50px' }}>
         Cadastro de clientes
       </Typography>
@@ -212,34 +227,39 @@ export default function CustomersForm() {
             onChange={handleFieldChange}
             autoFocus
           />
-<InputMask
+
+          <InputMask
             mask="999.999.999-99"
             maskChar=" "
             value={customer.ident_document}
-            onChange={handleFieldChange} 
-         >
-          {
-         () => <TextField 
-            id="ident_document"
-            name="ident_document" 
-            label="CPF" 
-            variant="filled"
-            required
-            fullWidth
-          />
-        }
-</InputMask>
+            onChange={handleFieldChange}
+          >
+            {
+              () => <TextField 
+                id="ident_document"
+                name="ident_document" 
+                label="CPF" 
+                variant="filled"
+                required
+                fullWidth
+              />
+            }
+          </InputMask>
 
-<LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptLocale}>
-  <DatePicker
-    label="Data de nascimento"
-    value={customer.birth_date}
-    onChange={ value => 
-      handleFieldChange({ target: { name: 'birth_date', value } }) 
-    }
-    slotProps={{ textField: { variant: 'filled', fullWidth: true } }}
-  />
-</LocalizationProvider>
+          <LocalizationProvider 
+          dateAdapter={AdapterDateFns} 
+          adapterLocale={ptLocale}
+          >
+            
+            <DatePicker
+              label="Data de nascimento"
+              value={customer.birth_date}
+              onChange={ value => 
+                handleFieldChange({ target: { name: 'birth_date', value } }) 
+              }
+              slotProps={{ textField: { variant: 'filled', fullWidth: true } }}
+            />
+          </LocalizationProvider>
 
           <TextField 
             id="street_name"
@@ -317,25 +337,25 @@ export default function CustomersForm() {
 
           <InputMask
             mask="(99) _9999-9999"
-            FormatChars={maskFormatChars}
+            formatChars={maskFormatChars}
             maskChar="_"
             value={customer.phone}
-            onChange={handleFieldChange} 
-         >
-          {
-         () => <TextField 
-         id="phone"
-         name="phone" 
-         label="Celular / Telefone de contato" 
-         variant="filled"
-         required
-         fullWidth
-         value={customer.phone}
-         onChange={handleFieldChange}
-       />  
-        }
-</InputMask>
-          
+            onChange={handleFieldChange}
+          >
+            {
+              () => <TextField 
+                id="phone"
+                name="phone" 
+                label="Celular / Telefone de contato" 
+                variant="filled"
+                required
+                fullWidth
+                value={customer.phone}
+                onChange={handleFieldChange}
+              />
+            }
+          </InputMask>
+
           <TextField 
             id="email"
             name="email" 

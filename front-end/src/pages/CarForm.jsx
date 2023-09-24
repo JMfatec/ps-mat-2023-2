@@ -19,22 +19,23 @@ import { parseISO } from 'date-fns'
 import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import { FormControl } from '@mui/material'
-import { DemoContainer, DemoItem } from '@mui/x-date-pickers/internals/demo';
-
+//import { addYears } from 'date-fns'
 
 export default function CarForm() {
 
   const navigate = useNavigate()
   const params = useParams()
   const buton = { inputProps: { 'aria-label': 'Switch demo' } };
-
+  //const [value, setYear] = React.useState(year(Number))
+  //const [value, setValue] = React.useState(dayjs('01-01-1940'));
+  //const minDate = addYears(new Date())
   //const [imported, setImported] = React.useState(car.imported);
 
   const carDefaults = {
     brand: '',
     model: '',
     color: '',
-    year_manufacture: '',
+    year_manufacture: 2023,
     imported: false,
     plates: '',
     selling_date: '',
@@ -53,6 +54,7 @@ export default function CarForm() {
     isFormModified: false
   })
 
+
   const {
     car,
     showWaiting,
@@ -61,13 +63,13 @@ export default function CarForm() {
     isFormModified
   } = state
 
-  const maskFormatChars = {
+   const maskFormatChars = {
       '9': '[0-9]',
       'a': '[A-Za-z]',
       '*': '[A-Za-z0-9]',
       '_': '[\s0-9]'           //Um espaço em branca ou um digito
   }
-
+  
   // useEffect com vetor de dependências vazio. Será executado
   // uma vez, quando o componente for carregado
   React.useEffect(() => {
@@ -77,17 +79,20 @@ export default function CarForm() {
     if(params.id) fetchData()
   }, [])
 
+  
   async function fetchData() {
     // Exibe o backdrop para indicar que uma operação está ocorrendo
     // em segundo plano
     setState({ ...state, showWaiting: true })
     try {
       const result = await myfetch.get(`car/${params.id}`)
-
-      //É necessário converter a data 
-      result.birth_date = parseISO(result.birth_date)
-
+    
+      // É necesário converter a data de venda de string para data
+      // antes de carregá-la no componente DatePicker
+      result.selling_date = parseISO(result.selling_date)
+ 
       setState({ ...state, showWaiting: false, car: result })
+      
     } 
     catch(error) {
       setState({ ...state, 
@@ -117,13 +122,16 @@ export default function CarForm() {
     setState({ ...state, showWaiting: true }) // Exibe o backdrop
     event.preventDefault(false)   // Evita o recarregamento da página
     try {
+
       let result
-      //Se existir o campo id nos dados do cliente, chama o método PUT
+      
+      // Se existir o campo id no json de dados, chama o método PUT
       // para alteração
       if(car.id) result = await myfetch.put(`car/${car.id}`, car)
-
+      
+      // Senão, chama o método POST para criar um novo registro
       else result = await myfetch.post('car', car)
-
+      console.log(AdapterDateFns)
       setState({ ...state, 
         showWaiting: false, // Esconde o backdrop
         notification: {
@@ -179,6 +187,61 @@ export default function CarForm() {
     if(answer) navigate('..', { relative: 'path' })
   }
 
+  //Importado? sim ou não/ true or false
+  const handleSwitchChange = () => {
+    //cópia do objeto car do state
+    const newCar = { ...car };
+  
+    // Atualizar imported na cópia do obj
+    newCar.imported = !newCar.imported;
+  
+    // Atualizar state com o novo obj car
+    setState({
+      ...state,
+      car: newCar,
+      isFormModified: true 
+    });
+  }
+
+  function handleAnoooooooChange(event) {
+  const newCar = { ...car };
+  const { name, value } = event.target;
+
+  // Se o campo for "year_manufacture", converta o valor para um número inteiro
+  newCar[name] = name === "year_manufacture" ? parseInt(value, 10) : value;
+
+  setState({
+    ...state,
+    car: newCar,
+    isFormModified: true,
+  });
+}
+
+function handleAnoChange(event) {
+  const newCar = { ...car };
+  const { name, value } = event.target;
+
+  if (name === "year_manufacture") {
+  // Converter o valor para um número inteiro
+  const year = parseInt(value, 10)
+
+  //console.log("Year:", year) 
+  // Verifica se o ano está dentro do intervalo desejado
+  if (year >= 1940 && year <= 2023) {
+    newCar[name] = year;
+  } else {
+    console.log(`Ano fora do intervalo desejado ${year}`) 
+  }
+
+  } 
+
+  setState({
+    ...state,
+    car: newCar,
+    isFormModified: true,
+  });
+}
+
   return(
     <>
 
@@ -190,6 +253,15 @@ export default function CarForm() {
         Há alterações que ainda não foram salvas. Deseja realmente voltar?
       </ConfirmDialog>
 
+      <Waiting show={showWaiting} />
+
+      <Notification
+        show={notification.show}
+        severity={notification.severity}
+        message={notification.message}
+        onClose={handleNotificationClose}
+      /> 
+
       <Typography variant="h1" sx={{ mb: '50px' }}>
         Cadastro de Carros
       </Typography>
@@ -198,7 +270,7 @@ export default function CarForm() {
 
         <Box className="form-fields">
         
-          <TextField 
+        <TextField 
             id="brand"
             name="brand" 
             label="Marca" 
@@ -209,7 +281,55 @@ export default function CarForm() {
             onChange={handleFieldChange}
             autoFocus
           />
-<InputMask
+
+          <TextField 
+            id="model"
+            name="model" 
+            label= "Modelo"
+            variant="filled"
+            required
+            fullWidth
+            placeholder="Ex: Palio, Gol, Ferrari, etc.."
+            value={car.model}
+            onChange={handleFieldChange}
+          />
+
+          <TextField 
+            id="color"
+            name="color" 
+            label="Cor" 
+            variant="filled"
+            required
+            fullWidth
+            value={car.color}
+            onChange={handleFieldChange}
+          />
+          
+           <TextField
+            type='Number'
+            id="year_manufacture"
+            name="year_manufacture"
+            label="Ano de fabricação"
+            //InputProps={{ inputProps: { min: 1940, max: 2023 } }}
+            variant="filled"
+            required
+            fullWidth
+            value={car.year_manufacture}
+            onChange={handleAnoChange}
+          ></TextField>
+
+    <FormControl>
+  <FormControlLabel 
+    control={<Switch defaultUnchecked />} 
+    label="Importado"
+    id="imported"
+    imported="imported"
+    checked={car.imported}
+    onChange={handleSwitchChange}
+   />
+  </FormControl>
+
+        <InputMask
             mask="aaa-9a99"
             maskChar=" "
             value={car.plates}
@@ -225,80 +345,36 @@ export default function CarForm() {
             fullWidth
           />
         }
-</InputMask>
+        </InputMask>
+        
+        <LocalizationProvider 
+         dateAdapter={AdapterDateFns} 
+         adapterLocale={ptLocale}
+       >
 
-<LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptLocale}>
-  <DatePicker
-    label="Data de venda"
-    value={car.selling_date}
-    onChange={ value => 
-      handleFieldChange({ target: { name: 'selling_date', value } }) 
-    }
-    slotProps={{ textField: { variant: 'filled', fullWidth: true } }}
-  />
-</LocalizationProvider>
+        <DatePicker
+        label="Data de venda"
+        value={car.selling_date}
+        onChange={ value => 
+        handleFieldChange({ target: { name: 'selling_date', value } }) 
+        }
+        slotProps={{ textField: { variant: 'filled', fullWidth: true } }}
+        />
 
+         </LocalizationProvider>
 
-
-          <TextField 
-            id="model"
-            name="model" 
-            label= "Modelo"
-            variant="filled"
-            required
-            fullWidth
-            placeholder="Ex: Palio, Gol, Ferrari, etc.."
-            value={car.model}
-            onChange={handleFieldChange}
-          />
-
-          <TextField 
+           <TextField 
             id="selling_price"
             name="selling_price" 
             label="Valor" 
             variant="filled"
+            type='number'
             required
             fullWidth
             value={car.selling_price}
             onChange={handleFieldChange}
           />
-
-          <TextField 
-            id="color"
-            name="color" 
-            label="Cor" 
-            variant="filled"
-            required
-            fullWidth
-            value={car.color}
-            onChange={handleFieldChange}
-          />
-
-          
-
-<LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptLocale}>
-
-    <DatePicker
-      label="Ano de Fabricação"
-      value={car.year_manufacture}
-      maxDate={'1940-01-01T00:00:00.000'}
-      views={['year', 'month', 'day']}
-      onChange={ value => 
-      handleFieldChange({ target: { name: 'year_manufacture', value } }) 
-    }
-      slotProps={{ textField: { variant: 'filled', fullWidth: true } }}
-    />
-
-</LocalizationProvider>
-<FormControl>
-  <FormControlLabel control={<Switch defaultUnchecked />} 
-    label="Importado"
-    id="imported"
-    name="imported"
-    required
-    value={car.imported}
-   />
-  </FormControl>
+         
         </Box>
 
         <Box sx={{ fontFamily: 'monospace' }}>
