@@ -204,11 +204,11 @@ export default function CarForm() {
   }
 
   function handleAnoooooooChange(event) {
-  const newCar = { ...car };
-  const { name, value } = event.target;
+  const newCar = { ...car }
+  const { name, value } = event.target
 
-  // Se o campo for "year_manufacture", converta o valor para um número inteiro
-  newCar[name] = name === "year_manufacture" ? parseInt(value, 10) : value;
+  // Se o campo for "year_manufacture", converte o valor para um número inteiro
+  newCar[name] = name === "year_manufacture" ? parseInt(value, 10) : value
 
   setState({
     ...state,
@@ -218,11 +218,11 @@ export default function CarForm() {
 }
 
 function handleAnoChange(event) {
-  const newCar = { ...car };
-  const { name, value } = event.target;
+  const newCar = { ...car }
+  const { name, value } = event.target
 
   if (name === "year_manufacture") {
-  // Converter o valor para um número inteiro
+  // Converte o valor para um número inteiro
   const year = parseInt(value, 10)
 
   //console.log("Year:", year) 
