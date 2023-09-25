@@ -190,10 +190,10 @@ export default function CarForm() {
   //Importado? sim ou não/ true or false
   const handleSwitchChange = () => {
     //cópia do objeto car do state
-    const newCar = { ...car };
+    const newCar = { ...car }
   
     // Atualizar imported na cópia do obj
-    newCar.imported = !newCar.imported;
+    newCar.imported = !newCar.imported
   
     // Atualizar state com o novo obj car
     setState({
@@ -214,7 +214,7 @@ export default function CarForm() {
     ...state,
     car: newCar,
     isFormModified: true,
-  });
+  })
 }
 
 function handleAnoChange(event) {
@@ -228,7 +228,7 @@ function handleAnoChange(event) {
   //console.log("Year:", year) 
   // Verifica se o ano está dentro do intervalo desejado
   if (year >= 1940 && year <= 2023) {
-    newCar[name] = year;
+    newCar[name] = year
   } else {
     console.log(`Ano fora do intervalo desejado ${year}`) 
   }
