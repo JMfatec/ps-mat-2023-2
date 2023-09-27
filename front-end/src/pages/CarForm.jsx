@@ -10,40 +10,33 @@ import Waiting from '../components/ui/Waiting'
 import Notification from '../components/ui/Notification'
 import { useNavigate, useParams } from 'react-router-dom'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
-import InputMask  from 'react-input-mask'
-import {DatePicker, LocalizationProvider } from '@mui/x-date-pickers'
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
+import InputMask from 'react-input-mask'
+import {DatePicker, LocalizationProvider} from '@mui/x-date-pickers'
+import {AdapterDateFns} from '@mui/x-date-pickers/AdapterDateFns'
 import ptLocale from 'date-fns/locale/pt-BR'
 import { parseISO } from 'date-fns'
-//import * as React from 'react';
-import Switch from '@mui/material/Switch';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import { FormControl } from '@mui/material'
-//import { addYears } from 'date-fns'
+import { FormControlLabel, Switch } from '@mui/material'
+import InputAdornment from '@mui/material/InputAdornment'
 
 export default function CarForm() {
 
   const navigate = useNavigate()
   const params = useParams()
-  const buton = { inputProps: { 'aria-label': 'Switch demo' } };
-  //const [value, setYear] = React.useState(year(Number))
-  //const [value, setValue] = React.useState(dayjs('01-01-1940'));
-  //const minDate = addYears(new Date())
-  //const [imported, setImported] = React.useState(car.imported);
 
   const carDefaults = {
     brand: '',
     model: '',
     color: '',
-    year_manufacture: 2023,
+    year_manufacture: '',
     imported: false,
     plates: '',
-    selling_date: '',
     selling_price: '',
+    customer_id: ''
   }
 
   const [state, setState] = React.useState({
-    car: carDefaults,    
+    car: carDefaults,  
+    customers: [],  
     showWaiting: false,
     notification: {
       show: false,
@@ -53,46 +46,62 @@ export default function CarForm() {
     openDialog: false,
     isFormModified: false
   })
-
+  
+  const maskFormChars = {
+    '9': '[0-9]',
+    'A': '[A-Za-z]',
+    '*': '[A-Za-z0-9]',
+    '@': '[A-Ja-j0-9]', // Aceita letras de A a J (maiúsculas ou minúsculas) e dígitos
+    '_': '[\s0-9]'
+  }
 
   const {
     car,
+    customers,
     showWaiting,
     notification,
     openDialog,
     isFormModified
   } = state
-
-   const maskFormatChars = {
-      '9': '[0-9]',
-      'a': '[A-Za-z]',
-      '*': '[A-Za-z0-9]',
-      '_': '[\s0-9]'           //Um espaço em branca ou um digito
-  }
   
+  const years = []
+
+  // Anos, do mais recente ao mais antigo
+  for(let year = 2023; year >= 1940; year--) years.push(year)
+
   // useEffect com vetor de dependências vazio. Será executado
   // uma vez, quando o componente for carregado
   React.useEffect(() => {
     // Verifica se existe o parâmetro id na rota.
     // Caso exista, chama a função fetchData() para carregar
     // os dados indicados pelo parâmetro para edição
-    if(params.id) fetchData()
+    fetchData(params.id)
   }, [])
 
-  
-  async function fetchData() {
+  async function fetchData(isUpdting) {
     // Exibe o backdrop para indicar que uma operação está ocorrendo
     // em segundo plano
     setState({ ...state, showWaiting: true })
     try {
-      const result = await myfetch.get(`car/${params.id}`)
-    
-      // É necesário converter a data de venda de string para data
-      // antes de carregá-la no componente DatePicker
-      result.selling_date = parseISO(result.selling_date)
- 
-      setState({ ...state, showWaiting: false, car: result })
+
+      let car = carDefaults
+
+
+      if(isUpdting){
+      car = await myfetch.get(`car/${params.id}`)
+      car.selling_date = parseISO(car.selling_date)
       
+      }
+
+      // Busca a listagem de clientes para preencher o componente de escolha
+      let customers = await myfetch.get('customer')
+
+      //cria um client 'fake' que permite não selecionar nehum cliente
+      customers.unshift({id: null, name: '(nehum cliente)'})
+      console.log({customers})
+
+      setState({ ...state, showWaiting: false, car, customers })
+
     } 
     catch(error) {
       setState({ ...state, 
@@ -107,10 +116,14 @@ export default function CarForm() {
   }
 
   function handleFieldChange(event) {
-    console.log(event)
     const newCar = { ...car }
-    newCar[event.target.name] = event.target.value
     
+    if (event.target.name === 'imported'){
+      newCar[event.target.name] = event.target.checked
+    } else {
+      newCar[event.target.name] = event.target.value
+    }
+
     setState({ 
       ...state, 
       car: newCar,
@@ -121,17 +134,13 @@ export default function CarForm() {
   async function handleFormSubmit(event) {
     setState({ ...state, showWaiting: true }) // Exibe o backdrop
     event.preventDefault(false)   // Evita o recarregamento da página
+  
     try {
-
-      let result
-      
-      // Se existir o campo id no json de dados, chama o método PUT
-      // para alteração
+      let result 
+      // se id então put para atualizar
       if(car.id) result = await myfetch.put(`car/${car.id}`, car)
-      
-      // Senão, chama o método POST para criar um novo registro
+      //senão post para criar novo 
       else result = await myfetch.post('car', car)
-      console.log(AdapterDateFns)
       setState({ ...state, 
         showWaiting: false, // Esconde o backdrop
         notification: {
@@ -187,61 +196,6 @@ export default function CarForm() {
     if(answer) navigate('..', { relative: 'path' })
   }
 
-  //Importado? sim ou não/ true or false
-  const handleSwitchChange = () => {
-    //cópia do objeto car do state
-    const newCar = { ...car }
-  
-    // Atualizar imported na cópia do obj
-    newCar.imported = !newCar.imported
-  
-    // Atualizar state com o novo obj car
-    setState({
-      ...state,
-      car: newCar,
-      isFormModified: true 
-    });
-  }
-
-  function handleAnoooooooChange(event) {
-  const newCar = { ...car }
-  const { name, value } = event.target
-
-  // Se o campo for "year_manufacture", converte o valor para um número inteiro
-  newCar[name] = name === "year_manufacture" ? parseInt(value, 10) : value
-
-  setState({
-    ...state,
-    car: newCar,
-    isFormModified: true,
-  })
-}
-
-function handleAnoChange(event) {
-  const newCar = { ...car }
-  const { name, value } = event.target
-
-  if (name === "year_manufacture") {
-  // Converte o valor para um número inteiro
-  const year = parseInt(value, 10)
-
-  //console.log("Year:", year) 
-  // Verifica se o ano está dentro do intervalo desejado
-  if (year >= 1940 && year <= 2023) {
-    newCar[name] = year
-  } else {
-    console.log(`Ano fora do intervalo desejado ${year}`) 
-  }
-
-  } 
-
-  setState({
-    ...state,
-    car: newCar,
-    isFormModified: true,
-  });
-}
-
   return(
     <>
 
@@ -263,14 +217,14 @@ function handleAnoChange(event) {
       /> 
 
       <Typography variant="h1" sx={{ mb: '50px' }}>
-        Cadastro de Carros
+        Cadastro de carros
       </Typography>
 
       <form onSubmit={handleFormSubmit}>
 
         <Box className="form-fields">
         
-        <TextField 
+          <TextField 
             id="brand"
             name="brand" 
             label="Marca" 
@@ -285,11 +239,11 @@ function handleAnoChange(event) {
           <TextField 
             id="model"
             name="model" 
-            label= "Modelo"
+            label="Modelo" 
             variant="filled"
             required
             fullWidth
-            placeholder="Ex: Palio, Gol, Ferrari, etc.."
+            placeholder="Ex.: Rua Principal"
             value={car.model}
             onChange={handleFieldChange}
           />
@@ -304,77 +258,103 @@ function handleAnoChange(event) {
             value={car.color}
             onChange={handleFieldChange}
           />
-          
-           <TextField
-            type='Number'
+
+          <TextField
             id="year_manufacture"
-            name="year_manufacture"
+            name="year_manufacture" 
             label="Ano de fabricação"
-            //InputProps={{ inputProps: { min: 1940, max: 2023 } }}
-            variant="filled"
-            required
+            select
+            defaultValue=""
             fullWidth
+            variant="filled"
+            helperText="Selecione o ano"
             value={car.year_manufacture}
-            onChange={handleAnoChange}
-          ></TextField>
+            onChange={handleFieldChange}
+          >
+          {years.map((option) => (
+            <MenuItem key={option} value={option}>
+              {option}
+            </MenuItem>
+          ))}
+        </TextField>
 
-    <FormControl>
-  <FormControlLabel 
-    control={<Switch defaultUnchecked />} 
-    label="Importado"
-    id="imported"
-    imported="imported"
-    checked={car.imported}
-    onChange={handleSwitchChange}
-   />
-  </FormControl>
-
-        <InputMask
-            mask="aaa-9a99"
-            maskChar=" "
-            value={car.plates}
-            onChange={handleFieldChange} 
-         >
-          {
-         () => <TextField 
-            id="plates"
-            name="plates" 
-            label="Placas" 
-            variant="filled"
-            required
-            fullWidth
-          />
-        }
-        </InputMask>
-        
-        <LocalizationProvider 
-         dateAdapter={AdapterDateFns} 
-         adapterLocale={ptLocale}
-       >
-
-        <DatePicker
-        label="Data de venda"
-        value={car.selling_date}
-        onChange={ value => 
-        handleFieldChange({ target: { name: 'selling_date', value } }) 
-        }
-        slotProps={{ textField: { variant: 'filled', fullWidth: true } }}
+        <FormControlLabel 
+          className="MuiFormControl-root"
+          sx={{ justifyContent: "start" }}
+          onChange={handleFieldChange} 
+          control={<Switch defaultChecked />} 
+          label="Importado" 
+          id="imported" 
+          name="imported" 
+          labelPlacement="start" 
+          checked={car.imported}
         />
 
-         </LocalizationProvider>
+        <InputMask
+          formatChars={maskFormChars}
+          mask="AAA-9@99"
+          value={car.plates.toUpperCase() /* Placas em maiúsculas */ }
+          onChange={handleFieldChange}
+          maskChar=" "
+        >
+          {
+            () =>
+            <TextField 
+              id="plates"
+              name="plates" 
+              label="Placa" 
+              variant="filled"
+              required
+              fullWidth
+              inputProps={{style: {textTransform: 'uppercase'}}}
+            />
+          }
+          </InputMask>
 
-           <TextField 
+          <TextField 
             id="selling_price"
             name="selling_price" 
-            label="Valor" 
+            label="Preço de venda" 
             variant="filled"
-            type='number'
-            required
             fullWidth
+            type="number"
+            InputProps={{ 
+              startAdornment: <InputAdornment position="start">R$</InputAdornment>
+            }}         
             value={car.selling_price}
             onChange={handleFieldChange}
           />
-         
+
+          <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptLocale}>
+            <DatePicker
+              label="Data de venda"
+              value={car.selling_date}
+              onChange={ value => 
+                handleFieldChange({ target: { name: 'selling_date', value } }) 
+              }
+              slotProps={{ textField: { variant: 'filled', fullWidth: true } }}
+            />
+          </LocalizationProvider>
+
+          <TextField
+            id="customer_id"
+            name="customer_id" 
+            label="Cliente adquirente"
+            select
+            defaultValue=""
+            fullWidth
+            variant="filled"
+            helperText="Selecione o cliente"
+            value={car.customer_id}
+            onChange={handleFieldChange}
+          >
+          {customers.map(customer => (
+            <MenuItem key={customer.id} value={customer.id}>
+              {customer.name}
+            </MenuItem>
+          ))}
+        </TextField>
+          
         </Box>
 
         <Box sx={{ fontFamily: 'monospace' }}>
