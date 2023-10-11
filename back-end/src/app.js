@@ -2,7 +2,7 @@ import express, { json, urlencoded } from "express";
 import cookieParser from "cookie-parser";
 import logger from "morgan";
 import dotenv from 'dotenv'
-import protectRoutes from "./lib/protectRoutes.js";
+import protectRoutes from './lib/protectRoutes.js'
 
 import cors from 'cors'
 
@@ -14,7 +14,11 @@ dotenv.config()
 
 const app = express();
 
-app.use(cors())
+app.use(cors({
+  origin: process.env.FRONT_ORIGIN,
+  credentials: true
+}))
+
 app.use(logger("dev"));
 app.use(json());
 app.use(urlencoded({ extended: false }));
