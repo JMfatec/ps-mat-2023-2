@@ -15,6 +15,8 @@ import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers'
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 import ptLocale from 'date-fns/locale/pt-BR'
 import { parseISO } from 'date-fns'
+import Customer from '../models/customer'
+import { ZodError } from 'zod'
 
 export default function CustomersForm() {
 
@@ -44,7 +46,8 @@ export default function CustomersForm() {
       message: ''
     },
     openDialog: false,
-    isFormModified: false
+    isFormModified: false,
+    validationErros: {}
   })
 
   const {
@@ -52,7 +55,8 @@ export default function CustomersForm() {
     showWaiting,
     notification,
     openDialog,
-    isFormModified
+    isFormModified,
+    validationErros
   } = state
 
   const states = [
@@ -124,6 +128,9 @@ export default function CustomersForm() {
     event.preventDefault(false)   // Evita o recarregamento da página
     try {
 
+      //Chama a validação da biblioteca zod
+      Customer.parse(customer)
+
       let result
 
       // Se existir o campo id no json de dados, chama o método PUT
@@ -138,17 +145,40 @@ export default function CustomersForm() {
         notification: {
           show: true,
           severity: 'success',
-          message: 'Dados salvos com sucesso.'
+          message: 'Dados salvos com sucesso.',
+          validationErros: {}
         }  
       })  
     }
     catch(error) {
-      setState({ ...state, 
+
+      if(error instanceof ZodError) {
+      console.error(error)
+
+      //Preence o estado validationError para exibir os erroe para o usuário
+      let valErrors = {}
+      for(let e of error.issues) valErrors[e.path[0]] = e.message
+      
+      setState({
+        ...state,
+        validationErros: valErrors,
         showWaiting: false, // Esconde o backdrop
         notification: {
           show: true,
           severity: 'error',
-          message: 'ERRO: ' + error.message
+          message: 'ERRO: há campos inválidos no formulário.'
+        }
+      })
+
+      }
+
+      else setState({ ...state, 
+        showWaiting: false, // Esconde o backdrop
+        notification: {
+          show: true,
+          severity: 'error',
+          message: 'ERRO: ' + error.message,
+          validationErros: {}
         } 
       })  
     }
@@ -226,6 +256,8 @@ export default function CustomersForm() {
             value={customer.name}
             onChange={handleFieldChange}
             autoFocus
+            error={validationErros.name}
+            helperText={validationErros?.name}
           />
 
           <InputMask
@@ -242,6 +274,8 @@ export default function CustomersForm() {
                 variant="filled"
                 required
                 fullWidth
+                error={validationErros.ident_document}
+                helperText={validationErros?.ident_document}
               />
             }
           </InputMask>
@@ -257,7 +291,13 @@ export default function CustomersForm() {
               onChange={ value => 
                 handleFieldChange({ target: { name: 'birth_date', value } }) 
               }
-              slotProps={{ textField: { variant: 'filled', fullWidth: true } }}
+              slotProps={{ textField: { 
+                variant: 'filled', 
+                fullWidth: true,
+                error: validationErros.birth_date,
+                helperText: validationErros?.birth_date
+              } 
+            }}
             />
           </LocalizationProvider>
 
@@ -271,6 +311,8 @@ export default function CustomersForm() {
             placeholder="Ex.: Rua Principal"
             value={customer.street_name}
             onChange={handleFieldChange}
+            error={validationErros.street_name}
+            helperText={validationErros?.street_name}
           />
 
           <TextField 
@@ -282,6 +324,8 @@ export default function CustomersForm() {
             fullWidth
             value={customer.house_number}
             onChange={handleFieldChange}
+            error={validationErros.house_number}
+            helperText={validationErros?.house_number}
           />
 
           <TextField 
@@ -293,6 +337,8 @@ export default function CustomersForm() {
             placeholder="Apto., bloco, casa, etc."
             value={customer.complements}
             onChange={handleFieldChange}
+            error={validationErros.complements}
+            helperText={validationErros?.complements}
           />
 
           <TextField 
@@ -304,6 +350,8 @@ export default function CustomersForm() {
             fullWidth
             value={customer.neighborhood}
             onChange={handleFieldChange}
+            error={validationErros.neighborhood}
+            helperText={validationErros?.neighborhood}
           />
           
           <TextField 
@@ -315,6 +363,8 @@ export default function CustomersForm() {
             fullWidth
             value={customer.municipality}
             onChange={handleFieldChange}
+            error={validationErros.municipality}
+            helperText={validationErros?.municipality}
           />
 
           <TextField
@@ -327,6 +377,8 @@ export default function CustomersForm() {
             required
             value={customer.state}
             onChange={handleFieldChange}
+            error={validationErros.state}
+            helperText={validationErros?.state}
           >
             {states.map((option) => (
               <MenuItem key={option.value} value={option.value}>
@@ -352,6 +404,8 @@ export default function CustomersForm() {
                 fullWidth
                 value={customer.phone}
                 onChange={handleFieldChange}
+                error={validationErros.phone}
+                helperText={validationErros?.phone}
               />
             }
           </InputMask>
@@ -365,6 +419,8 @@ export default function CustomersForm() {
             fullWidth
             value={customer.email}
             onChange={handleFieldChange}
+            error={validationErros.email}
+            helperText={validationErros?.email}
           />
           
         </Box>
